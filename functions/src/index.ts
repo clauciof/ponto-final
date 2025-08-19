@@ -40,7 +40,7 @@ const app = express();
 
 app.get("/health-check", (req: Request, res: Response) => {
   logger.info("Hello logs!", {structuredData: true});
-  res.send("Serverless Products API is running!");
+  res.send("Serverless Products API is running in Develop!");
 });
 
 app.get("/products", async (req: Request, res: Response) => {

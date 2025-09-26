@@ -16,6 +16,7 @@ import * as logger from "firebase-functions/logger";
 import {initializeApp, applicationDefault} from "firebase-admin/app";
 import {getFirestore} from "firebase-admin/firestore";
 
+// const cors = require("cors")({ origin: true });
 const firebaseApp = initializeApp({credential: applicationDefault()});
 
 const db = getFirestore(firebaseApp, "pontofinal");
@@ -44,10 +45,45 @@ app.get("/health-check", (req: Request, res: Response) => {
 });
 
 app.get("/products", async (req: Request, res: Response) => {
+  logger.info("List products");
   try {
     const snapshot = await db.collection("produtos").get();
     const products = snapshot.docs.map((doc) => ({id: doc.id, ...doc.data()}));
     res.status(200).json(products);
+  } catch (error) {
+    logger.error("Error fetching products", error);
+    res.status(500).send({error: "Failed to fetch products"});
+  }
+});
+
+app.get("/product/:id", async (req: Request, res: Response) => {
+  logger.info("Get product", { productId: req.params.id });
+  try {
+    const { id } = req.params;
+    const doc = await db.collection("produtos").doc(id).get();
+    if (!doc.exists) {
+      res.status(404).send({ error: "Product not found" });
+      return;
+    }
+    res.status(200).json({ id: doc.id, ...doc.data() });
+    return;
+  } catch (error) {
+    logger.error("Error fetching products", error);
+    res.status(500).send({error: "Failed to fetch products"});
+    return;
+  }
+});
+
+app.get("/new-products", async (req: Request, res: Response) => {
+  logger.info("List products");
+  try {
+    const snapshot = await db.collection("produtos").get();
+    const products = snapshot.docs.map((doc) => ({id: doc.id, ...doc.data()}));
+    if (products.length >= 4) {
+      res.status(200).json(products.slice(0, 4));
+    } else {
+      res.status(200).json(products);
+    }
   } catch (error) {
     logger.error("Error fetching products", error);
     res.status(500).send({error: "Failed to fetch products"});
